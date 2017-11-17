@@ -1,0 +1,31 @@
+version: "3"
+services:
+  radius:
+    build: .
+    ports:
+      - 1812:1812/udp
+    environment:
+      LDAP_URL: ldap://ldap
+      LDAP_BIND_PW: passwd
+    depends_on:
+      - ldap
+  ldap:
+    image: bgpat/slapd
+    environment:
+      ADMIN_PW: passwd
+      SCHEMAS: core cosine nis custom
+      CUSTOM_SCHEMA: |
+        objectClass ( 1.1.2.2.1.1 NAME 'radiusAccount'
+          SUP top AUXILIARY
+          MUST ( uid $$ userPassword )
+          )
+      INITIAL_LDIF: |
+        dn: ou=People,dc=domain,dc=tld
+        objectClass: organizationalUnit
+        ou: People
+        
+        dn: uid=test,ou=People,dc=domain,dc=tld
+        objectClass: account
+        objectClass: radiusAccount
+        uid: test
+        userPassword: test
